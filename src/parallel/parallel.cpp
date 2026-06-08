@@ -131,16 +131,46 @@ real_t integrateTrapezoidalParallel(real_t (*f)(real_t), real_t a, real_t b, siz
     real_t sum = 0.5 * (f(a) + f(b));
     
     unsigned int nthreads = num_threads;
-    std::vector<real_t> partial_sums(nthreads, 0.0);
     
-    parallelFor(1, n, [&](size_t i) {
-        unsigned int tid = i % nthreads;
-        partial_sums[tid] += f(a + i * h);
-    });
+#ifdef NUMPCPP_HAVE_THREADS
+    if (nthreads <= 1 || n < nthreads * 2) {
+        for (size_t i = 1; i < n; ++i) {
+            sum += f(a + i * h);
+        }
+        return sum * h;
+    }
+    
+    std::vector<real_t> partial_sums(nthreads, 0.0);
+    std::vector<std::thread> threads;
+    threads.reserve(nthreads);
+    
+    size_t chunk = (n - 1) / nthreads;
+    
+    for (unsigned int t = 0; t < nthreads; ++t) {
+        size_t start = 1 + t * chunk;
+        size_t stop = (t == nthreads - 1) ? n : 1 + (t + 1) * chunk;
+        
+        threads.emplace_back([t, start, stop, &partial_sums, &f, a, h]() {
+            real_t local_sum = 0.0;
+            for (size_t i = start; i < stop; ++i) {
+                local_sum += f(a + i * h);
+            }
+            partial_sums[t] = local_sum;
+        });
+    }
+    
+    for (auto& th : threads) {
+        th.join();
+    }
     
     for (auto s : partial_sums) {
         sum += s;
     }
+#else
+    for (size_t i = 1; i < n; ++i) {
+        sum += f(a + i * h);
+    }
+#endif
     
     return sum * h;
 }

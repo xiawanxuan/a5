@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <vector>
 #include <functional>
+#include <limits>
 
 namespace numcpp {
 
@@ -13,9 +14,9 @@ using complex_t = std::complex<double>;
 using index_t = std::ptrdiff_t;
 using size_t = std::size_t;
 
-constexpr real_t PI = 3.14159265358979323846;
-constexpr real_t EPS = 1e-10;
-constexpr real_t INF = 1e300;
+constexpr real_t PI = 3.14159265358979323846264338327950288;
+constexpr real_t EPS = std::numeric_limits<real_t>::epsilon() * 100;
+constexpr real_t INF = std::numeric_limits<real_t>::max();
 
 enum class DecompType {
     LU,

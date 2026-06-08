@@ -4,10 +4,46 @@
 #include <vector>
 #include <random>
 #include <algorithm>
+#include <limits>
 
 namespace numcpp {
 
+namespace {
+
+real_t kahanSum(const std::vector<real_t>& terms) {
+    real_t sum = 0.0;
+    real_t c = 0.0;
+    for (real_t t : terms) {
+        real_t y = t - c;
+        real_t t_sum = sum + y;
+        c = (t_sum - sum) - y;
+        sum = t_sum;
+    }
+    return sum;
+}
+
+real_t optimalStep(real_t x, int order) {
+    real_t eps = std::numeric_limits<real_t>::epsilon();
+    real_t x_abs = std::max(std::abs(x), 1.0);
+    if (order == 1) {
+        return std::pow(eps, 1.0 / 3.0) * x_abs;
+    } else if (order == 2) {
+        return std::pow(eps, 1.0 / 4.0) * x_abs;
+    }
+    return std::sqrt(eps) * x_abs;
+}
+
+}
+
 real_t differentiate(ScalarFunction f, real_t x, DiffMethod method, real_t h) {
+    if (h <= 0.0) {
+        if (method == DiffMethod::Central) {
+            h = optimalStep(x, 1);
+        } else {
+            h = std::sqrt(std::numeric_limits<real_t>::epsilon()) * std::max(std::abs(x), 1.0);
+        }
+    }
+    
     switch (method) {
         case DiffMethod::Forward:
             return (f(x + h) - f(x)) / h;
@@ -20,6 +56,9 @@ real_t differentiate(ScalarFunction f, real_t x, DiffMethod method, real_t h) {
 }
 
 real_t differentiateSecond(ScalarFunction f, real_t x, real_t h) {
+    if (h <= 0.0) {
+        h = optimalStep(x, 2);
+    }
     return (f(x + h) - 2.0 * f(x) + f(x - h)) / (h * h);
 }
 
@@ -67,10 +106,24 @@ real_t integrateTrapezoidal(ScalarFunction f, real_t a, real_t b, size_t n) {
         throw std::invalid_argument("Number of intervals must be positive");
     
     real_t h = (b - a) / n;
-    real_t sum = 0.5 * (f(a) + f(b));
+    real_t sum = 0.0;
+    real_t c = 0.0;
+    
+    real_t fa = f(a);
+    real_t fb = f(b);
+    
+    real_t y = 0.5 * (fa + fb) - c;
+    real_t t = sum + y;
+    c = (t - sum) - y;
+    sum = t;
     
     for (size_t i = 1; i < n; ++i) {
-        sum += f(a + i * h);
+        real_t x = a + i * h;
+        real_t fx = f(x);
+        y = fx - c;
+        t = sum + y;
+        c = (t - sum) - y;
+        sum = t;
     }
     
     return sum * h;
@@ -84,15 +137,30 @@ real_t integrateSimpson(ScalarFunction f, real_t a, real_t b, size_t n) {
     }
     
     real_t h = (b - a) / n;
-    real_t sum = f(a) + f(b);
+    real_t sum = 0.0;
+    real_t c = 0.0;
+    
+    real_t fa = f(a);
+    real_t fb = f(b);
+    
+    real_t y = fa - c;
+    real_t t = sum + y;
+    c = (t - sum) - y;
+    sum = t;
+    
+    y = fb - c;
+    t = sum + y;
+    c = (t - sum) - y;
+    sum = t;
     
     for (size_t i = 1; i < n; ++i) {
         real_t x = a + i * h;
-        if (i % 2 == 0) {
-            sum += 2.0 * f(x);
-        } else {
-            sum += 4.0 * f(x);
-        }
+        real_t fx = f(x);
+        real_t weight = (i % 2 == 0) ? 2.0 : 4.0;
+        y = weight * fx - c;
+        t = sum + y;
+        c = (t - sum) - y;
+        sum = t;
     }
     
     return sum * h / 3.0;
@@ -218,7 +286,7 @@ std::vector<real_t> gaussLegendreWeights(size_t n) {
     
     for (size_t i = 0; i < n; ++i) {
         legendreRecurrence(n, nodes[i], pn, pn_1, dpn);
-        weights[i] = 2.0 / ((1.0 - nodes[i] * nodes[i]) * dpn * dpn);
+        weights[i] = 2.0 * (1.0 - nodes[i] * nodes[i]) / (static_cast<real_t>(n) * n * pn_1 * pn_1);
     }
     
     return weights;
