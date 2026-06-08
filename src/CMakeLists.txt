@@ -7,6 +7,9 @@ set(NUMPCPP_SOURCES
     nonlinear/root_finding.cpp
     calculus/calculus.cpp
     parallel/parallel.cpp
+    sparse/sparse_matrix.cpp
+    ode/ode_solver.cpp
+    pde/fdm.cpp
 )
 
 add_library(numcpp ${NUMPCPP_SOURCES})

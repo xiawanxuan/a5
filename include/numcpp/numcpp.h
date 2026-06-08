@@ -10,5 +10,8 @@
 #include "numcpp/nonlinear/root_finding.h"
 #include "numcpp/calculus/calculus.h"
 #include "numcpp/parallel/parallel.h"
+#include "numcpp/sparse/sparse_matrix.h"
+#include "numcpp/ode/ode_solver.h"
+#include "numcpp/pde/fdm.h"
 
 #endif

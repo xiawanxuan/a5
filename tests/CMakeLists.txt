@@ -8,6 +8,9 @@ set(TEST_SOURCES
     test_root_finding.cpp
     test_calculus.cpp
     test_parallel.cpp
+    test_sparse.cpp
+    test_ode.cpp
+    test_pde.cpp
 )
 
 add_executable(numcpp_tests ${TEST_SOURCES})

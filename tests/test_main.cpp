@@ -10,6 +10,9 @@ extern std::vector<TestCase> get_fft_tests();
 extern std::vector<TestCase> get_root_finding_tests();
 extern std::vector<TestCase> get_calculus_tests();
 extern std::vector<TestCase> get_parallel_tests();
+extern std::vector<TestCase> get_sparse_tests();
+extern std::vector<TestCase> get_ode_tests();
+extern std::vector<TestCase> get_pde_tests();
 
 int main() {
     std::vector<TestCase> all_tests;
@@ -26,6 +29,9 @@ int main() {
     add_tests(get_root_finding_tests());
     add_tests(get_calculus_tests());
     add_tests(get_parallel_tests());
+    add_tests(get_sparse_tests());
+    add_tests(get_ode_tests());
+    add_tests(get_pde_tests());
     
     int passed = 0;
     int failed = 0;
